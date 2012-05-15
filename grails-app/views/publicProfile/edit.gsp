@@ -10,6 +10,8 @@
 <crm:header title="${cmd.name}" subtitle="${cmd.username}"/>
 
 <g:form action="edit">
+    <g:hiddenField name="id" value="${crmContact.id}"/>
+
     <div class="row-fluid">
 
         <div class="span9">
@@ -50,11 +52,7 @@
                     <div class="span4">
                         <fieldset>
                             <legend>Telefon &amp; e-post</legend>
-                            <!--
-                            <f:field property="currency" label="publicProfile.currency.label"/>
-                            -->
                             <f:field property="telephone" label="crmContact.telephone.label"/>
-                            <f:field property="mobile" label="crmContact.mobile.label"/>
                             <f:field property="email" label="crmContact.email.label"/>
                             <f:field property="url" label="crmContact.url.label"/>
                         </fieldset>

@@ -18,58 +18,148 @@ package grails.plugins.crm.profile
 
 import javax.servlet.http.HttpServletResponse
 import grails.converters.JSON
+import grails.plugins.crm.contact.CrmContact
+import grails.plugins.crm.security.shiro.ShiroCrmSecurityService
+import grails.plugins.crm.security.shiro.ShiroCrmUser
+import grails.plugins.crm.core.TenantUtils
+import grails.plugins.crm.content.CrmResourceFolder
 
 class PublicProfileController {
 
-    static allowedMethods = [index: "GET", edit: ["GET", "POST"], upload:"POST", updateImageCaption:"POST", deleteImage:"POST", updateDescription:"POST"]
+    static allowedMethods = [index: "GET", edit: ["GET", "POST"], createFromUser: "POST", createFromContact: "POST",
+            upload: "POST", updateImageCaption: "POST", deleteImage: "POST", updateDescription: "POST"]
 
     def crmSecurityService
     def shiroCrmSecurityService
     def crmContactService
-    def crmContentLibraryService
     def crmContentService
-    def crmTagService
 
-    def index() {
-        crmTagService.createTag(name: "brukare")
-        crmTagService.createTag(name: "djurslag")
-        crmTagService.createTag(name: "nöt-antal")
-        crmTagService.createTag(name: "nöt-raser")
-        def user = crmSecurityService.currentUser
-        def crmContact = findContact(user)
-        def webFolder = crmContentLibraryService.getFolder(crmContact.number)
-        def photos = webFolder ? webFolder.getFiles(extension: ['png', 'jpg', 'gif']) : []
-        [user: user, crmContact: crmContact, address: crmContact.address, photos: photos]
+    def index(Long id) {
+        def (crmContact, user) = findContactAndUser(id)
+
+        if (!crmContact) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND)
+            return
+        }
+
+        if (!user) {
+            user = [:]
+        }
+
+        def webFolder = crmContentService.getFolder(crmContact.number, crmContact.tenantId)
+        if (!webFolder) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND)
+            return
+        }
+
+        def photos = webFolder.getFiles(extension: ['png', 'jpg', 'gif'])
+
+        [user: user, crmContact: crmContact, address: crmContact.address, webFolder: webFolder, photos: photos]
     }
 
-    private Object findContact(user) {
-        def crmContact = crmContactService.list([guid: user.guid], [sort: 'id', order: 'asc']).find {it}
+    private List findContactAndUser(Long id) {
+        def crmContact
+        def user
+
+        if (id) {
+            crmContact = CrmContact.get(id)
+            if (crmContact?.guid) {
+                user = ShiroCrmUser.findByGuid(crmContact.guid) // TOOD dependency on ShiroCrmUser is not wanted here.
+            }
+        } else {
+            user = crmSecurityService.currentUser
+            if (!user) {
+                throw new RuntimeException("Not authorized")
+            }
+            crmContact = CrmContact.findByGuid(user.guid)
+        }
+
+        return [crmContact, user]
+    }
+
+    def createFromUser(String username) {
+        def user = shiroCrmSecurityService.getUser(username)
+        if (!user) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND)
+            return
+        }
+
+        def crmContact = CrmContact.findByGuid(user.guid)
         if (!crmContact) {
             crmContact = crmContactService.save(guid: user.guid, name: user.name, telephone: user.telephone, email: user.email,
                     address: [address1: user.address1, address2: user.address2, address3: user.address3,
                             postalCode: user.postalCode, city: user.city, region: user.region, country: user.countryCode])
         }
-        return crmContact
+
+        def folder = crmContentService.getFolder(crmContact.number, crmContant.tenantId)
+        if (!folder) {
+            TenantUtils.withTenant(crmContact.tenantId) {
+                crmContentService.createFolder(null, crmContact.number)
+            }
+        }
+
+        flash.success = message(code: "publicProfile.created.message", default: "Public Profile created", args: [crmContact.toString()])
+
+        if (params.referer) {
+            redirect(uri: params.referer - request.contextPath)
+        } else {
+            redirect(controller: "crmContact", action: "show", id: crmContact.id)
+        }
     }
 
-    def edit() {
-        def user = crmSecurityService.currentUser
-        def crmContact = findContact(user)
+    def createFromContact(String id) {
+        def crmContact = CrmContact.get(id)
+        if (!crmContact) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND)
+            return
+        }
+        TenantUtils.withTenant(crmContact.tenantId) {
+            crmContentService.createFolder(null, crmContact.number)
+        }
+
+        flash.success = message(code: "publicProfile.created.message", default: "Public Profile created", args: [crmContact.toString()])
+
+        if (params.referer) {
+            redirect(uri: params.referer - request.contextPath)
+        } else {
+            redirect(controller: "crmContact", action: "show", id: id)
+        }
+    }
+
+    def edit(Long id) {
+        def (crmContact, user) = findContactAndUser(id)
+        if (!crmContact) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND)
+            return
+        }
         def cmd = new ProfileEditCommand()
         switch (request.method) {
             case "GET":
-                bindData(cmd, user)
-                bindData(cmd, [url: crmContact.url])
+                if (user) {
+                    bindData(cmd, user.properties, [include: ['username']])
+                }
+                bindData(cmd, crmContact.properties, [include: ['name', 'telephone', 'mobile', 'email', 'url']])
+                bindData(cmd, crmContact.address.properties)
+                println "cmd=${cmd.toMap()}"
                 break
             case "POST":
                 bindData(cmd, params)
-                cmd.username = user.username
-                cmd.email = user.email
+                cmd.username = user?.username
+                cmd.email = crmContact.email // Not allowed to update email
                 if (cmd.validate()) {
-                    crmContact = updateProfile(cmd)
+                    def values = cmd.toMap()
+                    bindData(crmContact, values)
+                    bindData(crmContact.address, values)
+                    crmContact.save(flush: true)
+                    if (cmd.username) {
+                        shiroCrmSecurityService.updateUser(values)
+                    }
                     updateFacts(crmContact, params)
                     flash.success = message(code: "publicProfile.updated.message", default: "Profile updated", args: [cmd.name, cmd.username, cmd.email])
-                    redirect action: "index"
+                    if (crmContact?.guid == crmSecurityService.currentUser?.guid) {
+                        id = null
+                    }
+                    redirect action: "index", id: id
                     return
                 }
                 break
@@ -77,63 +167,57 @@ class PublicProfileController {
         [cmd: cmd, crmContact: crmContact]
     }
 
-    private Object updateProfile(ProfileEditCommand cmd) {
-        def values = cmd.toMap()
-        // Update user.
-        def user = shiroCrmSecurityService.updateUser(values)
-
-        // Update user's CrmContact instance.
-        def crmContact = findContact(user)
-        if (crmContact) {
-            bindData(crmContact, values)
-            bindData(crmContact.address, values)
-            return crmContact.save(flush: true)
-        }
-
-        log.error("No CrmContact found for profile [${user.username}]")
-
-        return null
-    }
-
+    // TODO How do we make the facts dynamic/configurable???
     private void updateFacts(crmContact, params) {
-        crmContact.setTagValue("brukare", params.brukare)
-        crmContact.setTagValue("djurslag", params.djurslag)
-        crmContact.setTagValue("nöt-antal", params.antal)
-        crmContact.setTagValue("nöt-raser", params.raser)
+        TenantUtils.withTenant(crmContact.tenantId) {
+            crmContact.setTagValue("brukare", params.brukare)
+            crmContact.setTagValue("djurslag", params.djurslag)
+            crmContact.setTagValue("nöt-antal", params.antal)
+            crmContact.setTagValue("nöt-raser", params.raser)
+        }
     }
 
-    def upload() {
+    def upload(Long folder) {
+        def webFolder = CrmResourceFolder.get(folder)
+        if (!webFolder) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND)
+            return
+        }
 
         def fileItem = request.getFile("file")
         if (fileItem && !fileItem.isEmpty()) {
-            def user = crmSecurityService.currentUser
-            def crmContact = findContact(user)
-            def webFolder = crmContentLibraryService.getFolder(crmContact.number)
-            if (webFolder) {
-                try {
-                    def ref = crmContentService.createResource(fileItem, webFolder)
-                    flash.success = message(code: "crmContent.upload.success", args: [ref.toString()], default: "Resource [{0}] uploaded")
-                } catch (Exception e) {
-                    log.error("Failed to upload file: ${fileItem.originalFilename}", e)
-                    flash.error = message(code: "crmContent.upload.error", args: [fileItem.originalFilename], default: "Failed to upload file {0}")
+            try {
+                def ref
+                TenantUtils.withTenant(webFolder.tenantId) {
+                    ref = crmContentService.createResource(fileItem, webFolder)
                 }
+                flash.success = message(code: "crmContent.upload.success", args: [ref.toString()], default: "Resource [{0}] uploaded")
+            } catch (Exception e) {
+                log.error("Failed to upload file: ${fileItem.originalFilename}", e)
+                flash.error = message(code: "crmContent.upload.error", args: [fileItem.originalFilename], default: "Failed to upload file {0}")
             }
         }
-        redirect(action: 'index')
+
+        def crmContact = CrmContact.findByNumberAndTenantId(webFolder.name, webFolder.tenantId)
+        def id = (crmContact?.guid == crmSecurityService.currentUser?.guid) ? null : crmContact.id
+
+        redirect(action: 'index', id: id)
     }
 
     def updateImageCaption(Long id, String caption) {
+        // TODO security alert! Logged in users can update *any* image caption!
         def ref = crmContentService.getResourceRef(id)
         if (!ref) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND)
             return
         }
-        ref.name = caption
+        ref.title = caption
         ref.save()
         render ref.dao as JSON
     }
 
     def deleteImage(Long id) {
+        // TODO security alert! Logged in users can delete *any* image!
         def ref = crmContentService.getResourceRef(id)
         if (!ref) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND)
@@ -143,15 +227,19 @@ class PublicProfileController {
         render "DELETED"
     }
 
-    def updateDescription(String description) {
-        def user = crmSecurityService.currentUser
-        def crmContact = findContact(user)
-        if (!crmContact) {
+    def updateDescription(String id, String description) {
+        /*
+        def (crmContact, user) = findContactAndUser(id)
+        def webFolder = CrmContentcrmContentLibraryService.getFolder(crmContact.number)
+        */
+        // TODO security alert! Logged in users can update *any* description!
+        def webFolder = CrmResourceFolder.get(id)
+        if (webFolder) {
+            webFolder.description = description
+            webFolder.save()
+            render webFolder.description
+        } else {
             response.sendError(HttpServletResponse.SC_NOT_FOUND)
-            return
         }
-        crmContact.description = description
-        crmContact.save()
-        render description
     }
 }

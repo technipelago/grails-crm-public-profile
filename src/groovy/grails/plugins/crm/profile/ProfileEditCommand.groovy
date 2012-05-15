@@ -42,7 +42,7 @@ class ProfileEditCommand implements Serializable {
     String url
 
     static constraints = {
-        username(size: 3..80, maxSize: 80, nullable: false, blank: false, unique: true)
+        username(size: 3..80, maxSize: 80, nullable: true)
         name(size: 3..80, maxSize: 80, nullable: false, blank: false)
         email(maxSize: 80, blank: false, email: true)
         password1(size: 5..80, maxSize: 80, nullable: true, validator: {val, obj ->
