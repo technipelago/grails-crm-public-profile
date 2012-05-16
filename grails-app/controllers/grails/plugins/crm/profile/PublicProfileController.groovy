@@ -143,6 +143,12 @@ class PublicProfileController {
                 println "cmd=${cmd.toMap()}"
                 break
             case "POST":
+                if (params.latitude) {
+                    cmd.latitude = Float.valueOf(params.remove('latitude'))
+                }
+                if (params.longitude) {
+                    cmd.longitude = Float.valueOf(params.remove('longitude'))
+                }
                 bindData(cmd, params)
                 cmd.username = user?.username
                 cmd.email = crmContact.email // Not allowed to update email

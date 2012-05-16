@@ -40,6 +40,8 @@ class ProfileEditCommand implements Serializable {
     String telephone
     String mobile
     String url
+    Float latitude
+    Float longitude
 
     static constraints = {
         username(size: 3..80, maxSize: 80, nullable: true)
@@ -63,9 +65,13 @@ class ProfileEditCommand implements Serializable {
         telephone(size: 4..20, maxSize: 20, nullable: true)
         mobile(size: 4..20, maxSize: 20, nullable: true)
         url(maxSize: 255, nullable: true)
+        latitude(nullable: true, min: -180f, max: 180f, precision: 10, scale: 6)
+        longitude(nullable: true, min: -180f, max: 180f, precision: 10, scale: 6)
     }
 
-    public static final List<String> PROPS = ["username", "name", "email", "address1", "address2", "address3", "postalCode", "city", "region", "countryCode", "currency", "telephone", "mobile", "url"]
+    public static final List<String> PROPS = ["username", "name", "email", "address1", "address2", "address3",
+            "postalCode", "city", "region", "countryCode", "currency", "telephone", "mobile",
+            "url", "latitude", "longitude"]
 
     Map toMap() {
         def map = PROPS.inject([:]) {map, p ->

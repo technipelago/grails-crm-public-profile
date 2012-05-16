@@ -46,6 +46,10 @@
                             <f:field property="region" label="crmAddress.region.label"/>
                             <f:field property="countryCode" label="crmAddress.country.label"/>
                             -->
+                            <f:field property="latitude" label="crmAddress.latitude" input-min="-90"
+                                     input-max="90" input-step="0.000001"/>
+                            <f:field property="longitude" label="crmAddress.longitude"
+                                     input-min="-180" input-max="180" input-step="0.000001"/>
                         </fieldset>
                     </div>
 
@@ -74,7 +78,8 @@
 
             <div class="form-actions">
                 <crm:button visual="success" action="edit" icon="icon-ok icon-white" label="Uppdatera"/>
-                <crm:button type="link" action="index" icon="icon-remove" label="publicProfile.button.back.label"/>
+                <crm:button type="link" action="index" id="${crmContact.id}" icon="icon-remove"
+                            label="publicProfile.button.back.label"/>
             </div>
         </div>
 
@@ -85,16 +90,20 @@
                     <li class="nav-header">Gårdsfakta</li>
                     <li>
                         <label>Brukare/Ägare</label>
-                        <g:textField name="brukare" class="span2" value="${crmContact.getTagValue('brukare')}" placeholder="Familjens namn..."/>
+                        <g:textField name="brukare" class="span2" value="${crmContact.getTagValue('brukare')}"
+                                     placeholder="Familjens namn..."/>
 
                         <label>Djurslag</label>
-                        <g:textField name="djurslag" class="span2" value="${crmContact.getTagValue('djurslag')}" placeholder="Nöt, lamm..."/>
+                        <g:textField name="djurslag" class="span2" value="${crmContact.getTagValue('djurslag')}"
+                                     placeholder="Nöt, lamm..."/>
 
                         <label>Antal nöt</label>
-                        <g:textField name="antal" class="span2" value="${crmContact.getTagValue('nöt-antal')}" placeholder="Ange antal nöt..."/>
+                        <g:textField name="antal" class="span2" value="${crmContact.getTagValue('nöt-antal')}"
+                                     placeholder="Ange antal nöt..."/>
 
                         <label>Raser</label>
-                        <g:textField name="raser" class="span2" value="${crmContact.getTagValue('nöt-raser')}" placeholder="Ange nötraser..."/>
+                        <g:textField name="raser" class="span2" value="${crmContact.getTagValue('nöt-raser')}"
+                                     placeholder="Ange nötraser..."/>
                     </li>
                 </ul>
 
