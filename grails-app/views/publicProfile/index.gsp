@@ -53,7 +53,7 @@
                 $.post("${createLink(action: 'deleteImage')}", {id:id}, function(data) {
                     container.closest("li").remove();
                     if(active) {
-                        $("#image-preview").html('<g:img dir="images" file="default-profile.jpg"/>');
+                        $("#image-preview").html('<g:img dir="images" file="default-profile.jpg" plugin="crm-public-profile"/>');
                     }
                 });
             }).css("cursor", "pointer");
@@ -85,7 +85,7 @@
                                 <h5 class="caption">${firstPhoto.title.encodeAsHTML()}</h5>
                             </g:if>
                             <g:unless test="${photos}">
-                                <g:img dir="images" file="default-profile.jpg"/>
+                                <g:img dir="images" file="default-profile.jpg" plugin="crm-public-profile"/>
                                 <h5>
                                     Ingen bild är uppladdad än.
                                 </h5>
