@@ -94,7 +94,7 @@ class PublicProfileController {
         def folder = crmContentService.getFolder(crmContact.number, crmContant.tenantId)
         if (!folder) {
             TenantUtils.withTenant(crmContact.tenantId) {
-                crmContentService.createFolder(null, crmContact.number)
+                crmContentService.createFolder(null, crmContact.number, crmContact.name, null, "")
             }
         }
 
@@ -114,7 +114,7 @@ class PublicProfileController {
             return
         }
         TenantUtils.withTenant(crmContact.tenantId) {
-            crmContentService.createFolder(null, crmContact.number)
+            crmContentService.createFolder(null, crmContact.number, crmContact.name, null, "")
         }
 
         flash.success = message(code: "publicProfile.created.message", default: "Public Profile created", args: [crmContact.toString()])

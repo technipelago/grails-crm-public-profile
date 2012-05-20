@@ -96,25 +96,14 @@
 
                 <p class="caption"></p>
 
-                <g:textArea name="description" rows="7" cols="50" class="span6" value="${webFolder.description}"
+                <g:textArea name="description" rows="8" cols="50" class="span6" value="${webFolder.description}"
                             placeholder="Ange en trevlig text som beskriver gården. 5-6 rader är lagom."/>
             </div>
 
             <div class="span4">
                 <div class="pull-right">
                     <ul class="thumbnails">
-                        <g:each in="${photos}" var="photo">
-                            <li>
-                                <div class="thumbnail span2">
-                                    <img src="${crm.createResourceLink(resource: photo)}"/>
-                                    <a href="#" class="caption toggle"><h5>${photo.title.encodeAsHTML()}</h5></a>
-                                    <g:textField id="photo_${photo.id}_caption" name="caption" class="toggle hide"
-                                                 style="width:87%;margin-top:3px;" maxlength="80"
-                                                 value="${photo.title}" data-crm-id="${photo.id}"/>
-                                    <i class="icon-trash pull-right delete" data-crm-id="${photo.id}"></i>
-                                </div>
-                            </li>
-                        </g:each>
+
                         <li>
                             <div class="thumbnail span2">
                                 <g:uploadForm action="upload">
@@ -131,6 +120,19 @@
                                 </g:uploadForm>
                             </div>
                         </li>
+
+                        <g:each in="${photos}" var="photo">
+                            <li>
+                                <div class="thumbnail span2">
+                                    <img src="${crm.createResourceLink(resource: photo)}"/>
+                                    <a href="#" class="caption toggle"><h5>${photo.title.encodeAsHTML()}</h5></a>
+                                    <g:textField id="photo_${photo.id}_caption" name="caption" class="toggle hide"
+                                                 style="width:87%;margin-top:3px;" maxlength="80"
+                                                 value="${photo.title}" data-crm-id="${photo.id}"/>
+                                    <i class="icon-trash pull-right delete" data-crm-id="${photo.id}"></i>
+                                </div>
+                            </li>
+                        </g:each>
                     </ul>
                 </div>
             </div>
