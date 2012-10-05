@@ -3,6 +3,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="main"/>
     <title><g:message code="crmPublicProfile.edit.title" args="[cmd.name, cmd.username, cmd.email]"/></title>
+    <r:require modules="googleMaps"/>
 </head>
 
 <body>
@@ -17,14 +18,14 @@
         <div class="span9">
 
             <g:hasErrors bean="${cmd}">
-                <bootstrap:alert class="alert-error">
+                <crm:alert class="alert-error">
                     <ul>
                         <g:eachError bean="${cmd}" var="error">
                             <li <g:if test="${error in org.springframework.validation.FieldError}">data-field-id="${error.field}"</g:if>><g:message
                                     error="${error}"/></li>
                         </g:eachError>
                     </ul>
-                </bootstrap:alert>
+                </crm:alert>
             </g:hasErrors>
 
             <f:with bean="${cmd}">
@@ -46,10 +47,45 @@
                             <f:field property="region" label="crmAddress.region.label"/>
                             <f:field property="countryCode" label="crmAddress.country.label"/>
                             -->
-                            <f:field property="latitude" label="crmAddress.latitude" input-min="-90"
-                                     input-max="90" input-step="0.000001"/>
-                            <f:field property="longitude" label="crmAddress.longitude"
-                                     input-min="-180" input-max="180" input-step="0.000001"/>
+                            <div class="control-group">
+                                <label class="control-label"><g:message code="crmAddress.latitude.label"/></label>
+
+                                <div class="controls">
+                                    <div class="input-append">
+                                        <input type="text" name="latitude"
+                                               value="${formatNumber(number: cmd.latitude, type: 'number', minFractionDigits: 6, maxFractionDigits: 6)}"
+                                               pattern="[0-9,\\.]+" min="-90" max="90" step="0.000001"
+                                               class="input-medium"/>
+                                        <g:if test="${grailsApplication.config.crm.map.google.api.key}">
+                                            <button class="btn btn-map" type="button"
+                                                    data-crm-latitude="latitude"
+                                                    data-crm-longitude="longitude"><i
+                                                    class="icon-map-marker"></i>
+                                            </button>
+                                        </g:if>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="control-group">
+                                <label class="control-label"><g:message code="crmAddress.longitude.label"/></label>
+
+                                <div class="controls">
+                                    <div class="input-append">
+                                        <input type="text" name="longitude"
+                                               value="${formatNumber(number: cmd.longitude, type: 'number', minFractionDigits: 6, maxFractionDigits: 6)}"
+                                               pattern="[0-9,\\.]+" min="-180" max="180" step="0.000001"
+                                               class="input-medium"/>
+                                        <g:if test="${grailsApplication.config.crm.map.google.api.key}">
+                                            <button class="btn btn-map" type="button"
+                                                    data-crm-latitude="latitude"
+                                                    data-crm-longitude="longitude"><i
+                                                    class="icon-map-marker"></i>
+                                            </button>
+                                        </g:if>
+                                    </div>
+                                </div>
+                            </div>
                         </fieldset>
                     </div>
 
@@ -90,19 +126,19 @@
                     <li class="nav-header">Gårdsfakta</li>
                     <li>
                         <label>Brukare/Ägare</label>
-                        <g:textField name="brukare" class="span2" value="${crmContact.getTagValue('brukare')}"
+                        <g:textField name="brukare" class="input-medium" value="${crmContact.getTagValue('brukare')}"
                                      placeholder="Familjens namn..."/>
 
                         <label>Djurslag</label>
-                        <g:textField name="djurslag" class="span2" value="${crmContact.getTagValue('djurslag')}"
+                        <g:textField name="djurslag" class="input-medium" value="${crmContact.getTagValue('djurslag')}"
                                      placeholder="Nöt, lamm..."/>
 
                         <label>Antal nöt</label>
-                        <g:textField name="antal" class="span2" value="${crmContact.getTagValue('nöt-antal')}"
+                        <g:textField name="antal" class="input-medium" value="${crmContact.getTagValue('nöt-antal')}"
                                      placeholder="Ange antal nöt..."/>
 
                         <label>Raser</label>
-                        <g:textField name="raser" class="span2" value="${crmContact.getTagValue('nöt-raser')}"
+                        <g:textField name="raser" class="input-medium" value="${crmContact.getTagValue('nöt-raser')}"
                                      placeholder="Ange nötraser..."/>
                     </li>
                 </ul>
@@ -111,6 +147,10 @@
         </div>
     </div>
 </g:form>
+
+<g:if test="${grailsApplication.config.crm.map.google.api.key}">
+    <g:render template="/crmContact/map-selector" plugin="crm-contact-lite" model="${[key: grailsApplication.config.crm.map.google.api.key]}"/>
+</g:if>
 
 </body>
 </html>

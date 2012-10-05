@@ -105,7 +105,7 @@
                     <ul class="thumbnails">
 
                         <li>
-                            <div class="thumbnail span2">
+                            <div class="thumbnail">
                                 <g:uploadForm action="upload">
                                     <g:hiddenField name="folder" value="${webFolder.id}"/>
                                     <p style="padding: 5px;">
@@ -123,7 +123,7 @@
 
                         <g:each in="${photos}" var="photo">
                             <li>
-                                <div class="thumbnail span2">
+                                <div class="thumbnail">
                                     <img src="${crm.createResourceLink(resource: photo)}"/>
                                     <a href="#" class="caption toggle"><h5>${photo.title.encodeAsHTML()}</h5></a>
                                     <g:textField id="photo_${photo.id}_caption" name="caption" class="toggle hide"

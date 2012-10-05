@@ -19,8 +19,8 @@ package grails.plugins.crm.profile
 import javax.servlet.http.HttpServletResponse
 import grails.converters.JSON
 import grails.plugins.crm.contact.CrmContact
-import grails.plugins.crm.security.shiro.ShiroCrmSecurityService
-import grails.plugins.crm.security.shiro.ShiroCrmUser
+import grails.plugins.crm.security.CrmSecurityService
+import grails.plugins.crm.security.CrmUser
 import grails.plugins.crm.core.TenantUtils
 import grails.plugins.crm.content.CrmResourceFolder
 
@@ -30,9 +30,9 @@ class PublicProfileController {
             upload: "POST", updateImageCaption: "POST", deleteImage: "POST", updateDescription: "POST"]
 
     def crmSecurityService
-    def shiroCrmSecurityService
     def crmContactService
     def crmContentService
+    def grailsApplication
 
     def index(Long id) {
         def (crmContact, user) = findContactAndUser(id)
@@ -64,7 +64,7 @@ class PublicProfileController {
         if (id) {
             crmContact = CrmContact.get(id)
             if (crmContact?.guid) {
-                user = ShiroCrmUser.findByGuid(crmContact.guid) // TOOD dependency on ShiroCrmUser is not wanted here.
+                user = CrmUser.findByGuid(crmContact.guid)
             }
         } else {
             user = crmSecurityService.currentUser
@@ -78,7 +78,7 @@ class PublicProfileController {
     }
 
     def createFromUser(String username) {
-        def user = shiroCrmSecurityService.getUser(username)
+        def user = crmSecurityService.getUser(username)
         if (!user) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND)
             return
@@ -143,12 +143,6 @@ class PublicProfileController {
                 println "cmd=${cmd.toMap()}"
                 break
             case "POST":
-                if (params.latitude) {
-                    cmd.latitude = Float.valueOf(params.remove('latitude'))
-                }
-                if (params.longitude) {
-                    cmd.longitude = Float.valueOf(params.remove('longitude'))
-                }
                 bindData(cmd, params)
                 cmd.username = user?.username
                 cmd.email = crmContact.email // Not allowed to update email
@@ -158,7 +152,7 @@ class PublicProfileController {
                     bindData(crmContact.address, values)
                     crmContact.save(flush: true)
                     if (cmd.username) {
-                        shiroCrmSecurityService.updateUser(values)
+                        crmSecurityService.updateUser(cmd.username, values)
                     }
                     updateFacts(crmContact, params)
                     flash.success = message(code: "publicProfile.updated.message", default: "Profile updated", args: [cmd.name, cmd.username, cmd.email])
@@ -195,7 +189,7 @@ class PublicProfileController {
             try {
                 def ref
                 TenantUtils.withTenant(webFolder.tenantId) {
-                    ref = crmContentService.createResource(fileItem, webFolder)
+                    ref = crmContentService.createResource(fileItem.inputStream, fileItem.originalFilename, fileItem.size, fileItem.contentType, webFolder)
                 }
                 flash.success = message(code: "crmContent.upload.success", args: [ref.toString()], default: "Resource [{0}] uploaded")
             } catch (Exception e) {
