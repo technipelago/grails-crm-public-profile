@@ -19,7 +19,6 @@ package grails.plugins.crm.profile
 import javax.servlet.http.HttpServletResponse
 import grails.converters.JSON
 import grails.plugins.crm.contact.CrmContact
-import grails.plugins.crm.security.CrmSecurityService
 import grails.plugins.crm.security.CrmUser
 import grails.plugins.crm.core.TenantUtils
 import grails.plugins.crm.content.CrmResourceFolder
@@ -28,6 +27,8 @@ class PublicProfileController {
 
     static allowedMethods = [index: "GET", edit: ["GET", "POST"], createFromUser: "POST", createFromContact: "POST",
             upload: "POST", updateImageCaption: "POST", deleteImage: "POST", updateDescription: "POST"]
+
+    private static final String PUBLIC_FOLDER = "partner"
 
     def crmSecurityService
     def crmContactService
@@ -46,7 +47,7 @@ class PublicProfileController {
             user = [:]
         }
 
-        def webFolder = crmContentService.getFolder(crmContact.number, crmContact.tenantId)
+        def webFolder = crmContentService.getFolder(PUBLIC_FOLDER + '/' + crmContact.number, crmContact.tenantId)
         if (!webFolder) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND)
             return
@@ -91,10 +92,11 @@ class PublicProfileController {
                             postalCode: user.postalCode, city: user.city, region: user.region, country: user.countryCode])
         }
 
-        def folder = crmContentService.getFolder(crmContact.number, crmContant.tenantId)
+        def folder = crmContentService.getFolder(PUBLIC_FOLDER + '/' + crmContact.number, crmContant.tenantId)
         if (!folder) {
             TenantUtils.withTenant(crmContact.tenantId) {
-                crmContentService.createFolder(null, crmContact.number, crmContact.name, null, "")
+                def root = PUBLIC_FOLDER ? crmContentService.getFolder(PUBLIC_FOLDER, crmContact.tenantId) : null
+                crmContentService.createFolder(root, crmContact.number, crmContact.name, null, "")
             }
         }
 
@@ -114,7 +116,8 @@ class PublicProfileController {
             return
         }
         TenantUtils.withTenant(crmContact.tenantId) {
-            crmContentService.createFolder(null, crmContact.number, crmContact.name, null, "")
+            def root = PUBLIC_FOLDER ? crmContentService.getFolder(PUBLIC_FOLDER, crmContact.tenantId) : null
+            crmContentService.createFolder(root, crmContact.number, crmContact.name, null, "")
         }
 
         flash.success = message(code: "publicProfile.created.message", default: "Public Profile created", args: [crmContact.toString()])
@@ -145,7 +148,9 @@ class PublicProfileController {
             case "POST":
                 bindData(cmd, params)
                 cmd.username = user?.username
-                cmd.email = crmContact.email // Not allowed to update email
+                if(crmContact.email) {
+                    cmd.email = crmContact.email // Not allowed to update email
+                }
                 if (cmd.validate()) {
                     def values = cmd.toMap()
                     bindData(crmContact, values)
@@ -228,10 +233,6 @@ class PublicProfileController {
     }
 
     def updateDescription(String id, String description) {
-        /*
-        def (crmContact, user) = findContactAndUser(id)
-        def webFolder = CrmContentcrmContentLibraryService.getFolder(crmContact.number)
-        */
         // TODO security alert! Logged in users can update *any* description!
         def webFolder = CrmResourceFolder.get(id)
         if (webFolder) {
