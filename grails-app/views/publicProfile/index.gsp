@@ -2,7 +2,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="main"/>
-    <title><g:message code="publicProfile.index.title" args="${[address?.address2 ?: crmContact.name, user.username, user.email]}"/></title>
+    <title><g:message code="publicProfile.index.title" args="${[address?.address3 ?: crmContact.name, user.username, user.email]}"/></title>
     <r:script>
         $(document).ready(function() {
             $(".thumbnail img").click(function(ev) {
@@ -68,7 +68,7 @@
 
 <body>
 
-<crm:header title="publicProfile.index.title" args="${[address?.address2 ?: crmContact.name, user.username, user.email]}"/>
+<crm:header title="publicProfile.index.title" args="${[address?.address3 ?: crmContact.name, user.username, user.email]}"/>
 
 <div class="row-fluid">
     <div class="span9">
@@ -143,6 +143,7 @@
 
     <div class="span3">
         <crm:submenu title="Kontaktuppgifter">
+            <li><strong>${address.address3?.encodeAsHTML()}</strong></li>
             <li><strong>${address.address1?.encodeAsHTML()}</strong></li>
             <li><strong>${address.address2?.encodeAsHTML()}</strong></li>
             <li><strong>${address.postalCode?.encodeAsHTML()} ${address.city?.encodeAsHTML()}</strong></li>
