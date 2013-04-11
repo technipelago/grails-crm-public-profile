@@ -33,7 +33,6 @@ class PublicProfileController {
     def crmSecurityService
     def crmContactService
     def crmContentService
-    def grailsApplication
 
     def index(Long id) {
         def (crmContact, user) = findContactAndUser(id)

@@ -35,7 +35,7 @@ grails.project.dependency.resolution = {
         compile "grails.crm:crm-core:latest.integration"
         compile "grails.crm:crm-security:latest.integration"
         //compile "grails.crm:crm-security-shiro:latest.integration"
-        compile "grails.crm:crm-contact-lite:latest.integration"
+        compile "grails.crm:crm-contact:latest.integration"
         compile "grails.crm:crm-content:latest.integration"
     }
 }
