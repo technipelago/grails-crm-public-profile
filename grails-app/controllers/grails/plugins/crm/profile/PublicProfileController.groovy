@@ -156,7 +156,10 @@ class PublicProfileController {
                     bindData(crmContact.address, values)
                     crmContact.save(flush: true)
                     if (cmd.username) {
-                        crmSecurityService.updateUser(cmd.username, values)
+                        def tmpUser = crmSecurityService.getUser(cmd.username)
+                        if(tmpUser) {
+                            crmSecurityService.updateUser(tmpUser, values)
+                        }
                     }
                     updateFacts(crmContact, params)
                     flash.success = message(code: "publicProfile.updated.message", default: "Profile updated", args: [cmd.name, cmd.username, cmd.email])

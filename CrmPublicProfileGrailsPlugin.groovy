@@ -1,23 +1,18 @@
 class CrmPublicProfileGrailsPlugin {
-    // Dependency group
     def groupId = "grails.crm"
-    // the plugin version
-    def version = "0.2"
-    // the version or versions of Grails the plugin is designed for
-    def grailsVersion = "2.0 > *"
-    // the other plugins this plugin depends on
+    def version = "1.3.0-SNAPSHOT"
+    def grailsVersion = "2.2 > *"
     def dependsOn = [:]
     def loadAfter = ['crmContact']
-    // resources that are excluded from plugin packaging
     def pluginExcludes = [
             "grails-app/views/error.gsp"
     ]
 
-    def title = "Crm Public Profile Plugin" // Headline display name of the plugin
+    def title = "GR8 CRM Public Profile Plugin"
     def author = "Goran Ehrsson"
     def authorEmail = "goran@technipelago.se"
     def description = '''\
-Provide a "members" area on your Grails CRM powered site where users can login
+Provide a "members" area on your GR8 CRM powered site where users can login
 and manage their contact information and a simple photo gallery.
 '''
 

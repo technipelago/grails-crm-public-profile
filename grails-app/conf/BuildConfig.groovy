@@ -2,40 +2,41 @@ grails.project.class.dir = "target/classes"
 grails.project.test.class.dir = "target/test-classes"
 grails.project.test.reports.dir = "target/test-reports"
 grails.project.target.level = 1.6
-//grails.project.war.file = "target/${appName}-${appVersion}.war"
 
 grails.project.repos.default = "crm"
 
 grails.project.dependency.resolution = {
-    // inherit Grails' default dependencies
-    inherits("global") {
-        // uncomment to disable ehcache
-        // excludes 'ehcache'
-    }
+    inherits("global") { }
     log "warn"
     repositories {
-        grailsHome()
+        grailsCentral()
         mavenRepo "http://labs.technipelago.se/repo/crm-releases-local/"
         mavenRepo "http://labs.technipelago.se/repo/plugins-releases-local/"
-        grailsCentral()
     }
     dependencies {
+        test "org.spockframework:spock-grails-support:0.7-groovy-2.0"
     }
 
     plugins {
         build(":tomcat:$grailsVersion",
-              ":release:2.2.1") {
+                ":release:2.2.1",
+                ":rest-client-builder:1.0.3") {
             export = false
         }
-        runtime ":hibernate:$grailsVersion"
+        test(":hibernate:$grailsVersion") {
+            export = false
+        }
 
-        test(":spock:0.7") { export = false }
-        runtime ":markdown:1.0.0.RC1"
+        test(":spock:0.7") {
+            export = false
+            exclude "spock-grails-support"
+        }
 
-        compile "grails.crm:crm-core:latest.integration"
-        compile "grails.crm:crm-security:latest.integration"
-        //compile "grails.crm:crm-security-shiro:latest.integration"
-        compile "grails.crm:crm-contact:latest.integration"
-        compile "grails.crm:crm-content:latest.integration"
+        compile ":markdown:1.1.1"
+
+        compile ":crm-core:2.0.2"
+        compile ":crm-security:2.0.0"
+        compile ":crm-contact:2.0.2"
+        compile ":crm-content:2.0.3"
     }
 }
