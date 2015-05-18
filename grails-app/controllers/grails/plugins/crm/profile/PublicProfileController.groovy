@@ -16,6 +16,8 @@
 
 package grails.plugins.crm.profile
 
+import grails.plugins.crm.content.CrmResourceRef
+
 import javax.servlet.http.HttpServletResponse
 import grails.converters.JSON
 import grails.plugins.crm.contact.CrmContact
@@ -25,8 +27,8 @@ import grails.plugins.crm.content.CrmResourceFolder
 
 class PublicProfileController {
 
-    static allowedMethods = [index: "GET", edit: ["GET", "POST"], createFromUser: "POST", createFromContact: "POST",
-            upload: "POST", updateImageCaption: "POST", deleteImage: "POST", updateDescription: "POST"]
+    static allowedMethods = [index : "GET", edit: ["GET", "POST"], createFromUser: "POST", createFromContact: "POST",
+                             upload: "POST", updateImageCaption: "POST", deleteImage: "POST", updateDescription: "POST"]
 
     private static final String PUBLIC_FOLDER = "partner"
 
@@ -45,15 +47,16 @@ class PublicProfileController {
         if (!user) {
             user = [:]
         }
-
+        def photos
         def webFolder = crmContentService.getFolder(PUBLIC_FOLDER + '/' + crmContact.number, crmContact.tenantId)
-        if (!webFolder) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND)
-            return
+        if (webFolder) {
+            photos = webFolder.getFiles(extension: ['png', 'jpg', 'gif'])
+        } else {
+            webFolder = crmContact
+            def jpgs = crmContentService.findResourcesByReference(webFolder, [name: "*.jpg", status: CrmResourceRef.STATUS_SHARED])
+            def pngs = crmContentService.findResourcesByReference(webFolder, [name: "*.png", status: CrmResourceRef.STATUS_SHARED])
+            photos = (jpgs + pngs) //.findAll { !it.isTagged('bilder') }
         }
-
-        def photos = webFolder.getFiles(extension: ['png', 'jpg', 'gif'])
-
         [user: user, crmContact: crmContact, address: crmContact.address, webFolder: webFolder, photos: photos]
     }
 
@@ -87,8 +90,8 @@ class PublicProfileController {
         def crmContact = CrmContact.findByGuid(user.guid)
         if (!crmContact) {
             crmContact = crmContactService.save(guid: user.guid, name: user.name, telephone: user.telephone, email: user.email,
-                    address: [address1: user.address1, address2: user.address2, address3: user.address3,
-                            postalCode: user.postalCode, city: user.city, region: user.region, country: user.countryCode])
+                    address: [address1  : user.address1, address2: user.address2, address3: user.address3,
+                              postalCode: user.postalCode, city: user.city, region: user.region, country: user.countryCode])
         }
 
         def folder = crmContentService.getFolder(PUBLIC_FOLDER + '/' + crmContact.number, crmContant.tenantId)
@@ -147,7 +150,7 @@ class PublicProfileController {
             case "POST":
                 bindData(cmd, params)
                 cmd.username = user?.username
-                if(crmContact.email) {
+                if (crmContact.email) {
                     cmd.email = crmContact.email // Not allowed to update email
                 }
                 if (cmd.validate()) {
@@ -157,7 +160,7 @@ class PublicProfileController {
                     crmContact.save(flush: true)
                     if (cmd.username) {
                         def tmpUser = crmSecurityService.getUser(cmd.username)
-                        if(tmpUser) {
+                        if (tmpUser) {
                             crmSecurityService.updateUser(tmpUser, values)
                         }
                     }
