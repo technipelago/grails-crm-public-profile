@@ -1,4 +1,4 @@
-# GR8 CRM - Public Profile PLugin
+# GR8 CRM - Public Profile Plugin
 
 CRM = [Customer Relationship Management](http://en.wikipedia.org/wiki/Customer_relationship_management)
 
