@@ -42,6 +42,7 @@ grails.project.dependency.resolution = {
         //compile ":markdown:1.1.1"
         compile ":decorator:1.1"
         compile ":decorator-markdown:0.4"
+        compile ":ckeditor:4.4.1.0"
 
         compile ":crm-core:2.4.1"
         compile ":crm-security:2.4.1"

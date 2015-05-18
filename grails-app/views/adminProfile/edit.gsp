@@ -6,6 +6,9 @@
     <g:set var="entityName" value="${message(code: 'crmContact.label', default: 'Contact')}"/>
     <title><g:message code="crmContact.edit.title" args="[entityName, crmContact]"/></title>
     <r:require modules="googleMaps,autocomplete,select2"/>
+    <g:if test="${htmlContent}">
+        <ckeditor:resources/>
+    </g:if>
     <r:script>
         function addCategoryInput() {
             var $div = $('<div class="row-fluid"/>');
@@ -22,6 +25,26 @@
             $newInput.focus();
         }
         $(document).ready(function() {
+            <% if (htmlContent) { %>
+                var stylesheet = ["${resource(dir: 'less', file: 'bootstrap.less.css', plugin: 'twitter-bootstrap')}",
+                "${resource(dir: 'less', file: 'crm-ui-bootstrap.less.css', plugin: 'crm-ui-bootstrap')}",
+                "${resource(dir: 'less', file: 'responsive.less.css', plugin: 'twitter-bootstrap')}"];
+                <% if (css) { %>
+                stylesheet.push("${resource(css)}");
+                <% } %>
+                var editor = CKEDITOR.replace('content',
+                {
+                    customConfig: "${resource(dir: 'js', file: 'crm-ckeditor-config.js', plugin: 'crm-content-ui')}",
+                    stylesSet: "crm-web-styles:${resource(dir: 'js', file: 'crm-ckeditor-styles.js', plugin: 'crm-content-ui')}",
+                    baseHref: "${createLink(controller: 'static')}",
+                    contentsCss: stylesheet,
+                    filebrowserBrowseUrl: "${createLink(controller: 'crmContent', action: 'browse', params: [reference: 'crmContact@' + crmContact.ident()])}",
+                    filebrowserUploadUrl: "${createLink(controller: 'crmContent', action: 'upload')}",
+                    filebrowserImageBrowseUrl: "${createLink(controller: 'crmContent', action: 'browse', params: [pattern: 'image', reference: 'crmContact@' + crmContact.ident()])}",
+                    filebrowserImageUploadUrl: "${createLink(controller: 'crmContent', action: 'upload')}"
+                });
+            <% } %>
+
             $("input.crm-category").autocomplete("${createLink(action: 'autocompleteCategoryType', params: [max: 20])}", {
                 remoteDataType: 'json',
                 useCache: false,
@@ -104,6 +127,9 @@
                     </a>
                 </li>
             </g:each>
+            <g:if test="${htmlContent}">
+                <li><a href="#html" data-toggle="tab"><g:message code="crmPublicProfile.tab.html.label" default="Presentation"/>(1)</a></li>
+            </g:if>
         </ul>
 
         <div class="tab-content">
@@ -191,7 +217,7 @@
 
                     <div class="row-fluid">
                         <f:field property="description" label="crmContact.description.label">
-                            <g:textArea name="description" rows="10" cols="80"
+                            <g:textArea name="description" rows="6" cols="80"
                                         value="${crmContact.description}" class="span10"/>
                         </f:field>
                     </div>
@@ -230,6 +256,13 @@
                     </div>
                 </div>
             </g:each>
+
+            <g:if test="${htmlContent}">
+                <div class="tab-pane" id="html">
+                    <g:textArea id="content" name="text" cols="80" rows="15" class="span11"
+                                                    value="${htmlContent.text}"/>
+                </div>
+            </g:if>
         </div>
     </div>
 

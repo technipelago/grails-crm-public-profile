@@ -7,6 +7,7 @@ import grails.plugins.crm.contact.CrmContact
 import grails.plugins.crm.contact.CrmContactAddress
 import grails.plugins.crm.contact.CrmContactCategory
 import grails.plugins.crm.contact.CrmContactCategoryType
+import grails.plugins.crm.content.CrmResourceRef
 import grails.plugins.crm.core.TenantUtils
 import grails.plugins.crm.core.WebUtils
 import grails.transaction.Transactional
@@ -18,10 +19,9 @@ import org.springframework.dao.DataIntegrityViolationException
 class AdminProfileController {
 
     def crmContactService
-    def crmTagService
+    def crmContentService
     def crmSecurityService
     def selectionService
-    def userTagService
     def recentDomainService
 
 
@@ -71,10 +71,10 @@ class AdminProfileController {
     }
 
     private List<CrmAddressType> getAddressTypes(Long tenant) {
-        CrmAddressType.createCriteria().list([sort: 'orderIndex', order: 'asc']) {
+        CrmAddressType.createCriteria().list([sort: 'orderIndex', order: 'desc']) {
             eq('tenantId', tenant)
             eq('enabled', true)
-            inList('param', ['postal','visit'])
+            inList('param', ['visit', 'postal'])
         }
     }
 
@@ -95,7 +95,15 @@ class AdminProfileController {
                 bindCategories(crmContact, params.list('category').findAll { it.trim() })
                 bindAddresses(crmContact, params)
 
-                if (!crmContact.save()) {
+                if (crmContact.save()) {
+                    // TODO hack!
+                    if(!params.text) {
+                        params.text = "<h2>${crmContact}</h2>\n<p>${crmContact.description ?: ''}</p>\n"
+                    }
+                    if(params.text) {
+                        crmContentService.createResource(params.text, 'presentation.html', crmContact, [contentType: 'text/html', status: CrmResourceRef.STATUS_SHARED])
+                    }
+                } else {
                     render(view: 'create', model: [user: user, crmContact: crmContact,
                             addressTypes: addressTypes, referer: params.referer])
                     return
@@ -160,11 +168,13 @@ class AdminProfileController {
             redirect(action: "index")
             return
         }
+
         def addressTypes = getAddressTypes(tenant)
+        def html = crmContentService.findResourcesByReference(crmContact, [name: "*.html", status: CrmResourceRef.STATUS_SHARED])?.find{it}
 
         switch (request.method) {
             case "GET":
-                return [user: user, crmContact: crmContact, addressTypes: addressTypes, referer: params.referer]
+                return [user: user, crmContact: crmContact, addressTypes: addressTypes, referer: params.referer, htmlContent: html]
             case "POST":
                 if (params.version) {
                     def version = params.version.toLong()
@@ -172,15 +182,30 @@ class AdminProfileController {
                         crmContact.errors.rejectValue("version", "default.optimistic.locking.failure",
                                 [message(code: 'crmContact.label', default: 'Contact')] as Object[],
                                 "Another user has updated this contact while you were editing")
-                        return [user: user, crmContact: crmContact, addressTypes: addressTypes, referer: params.referer]
+                        return [user: user, crmContact: crmContact, addressTypes: addressTypes, referer: params.referer, htmlContent: html]
                     }
                 }
                 bindData(crmContact, params)
                 bindCategories(crmContact, params.list('category').findAll { it.trim() })
                 bindAddresses(crmContact, params)
 
-                if (!crmContact.save()) {
-                    return [user: user, crmContact: crmContact, addressTypes: addressTypes, referer: params.referer]
+                if (crmContact.save()) {
+                    // TODO hack!
+                    if(!params.text) {
+                        params.text = "<h2>${crmContact}</h2>\n<p>${crmContact.description ?: ''}</p>\n"
+                    }
+                    if(html) {
+                        if(params.text) {
+                            def inputStream = new ByteArrayInputStream(params.text.getBytes('UTF-8'))
+                            crmContentService.updateResource(html, inputStream, 'text/html')
+                        } else {
+                            crmContentService.deleteReference(html)
+                        }
+                    } else if(params.text) {
+                        crmContentService.createResource(params.text, 'presentation.html', crmContact, [contentType: 'text/html', status: CrmResourceRef.STATUS_SHARED])
+                    }
+                } else {
+                    return [user: user, crmContact: crmContact, addressTypes: addressTypes, referer: params.referer, htmlContent: html]
                 }
 
                 flash.success = message(code: 'default.updated.message', args: [message(code: 'crmContact.label', default: 'Contact'), crmContact.toString()])

@@ -154,7 +154,7 @@
 
                     <div class="row-fluid">
                         <f:field property="description" label="crmContact.description.label">
-                            <g:textArea name="description" rows="10" cols="80"
+                            <g:textArea name="description" rows="6" cols="80"
                                         value="${crmContact.description}" class="span10"/>
                         </f:field>
                     </div>
