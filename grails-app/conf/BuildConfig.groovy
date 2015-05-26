@@ -35,8 +35,8 @@ grails.project.dependency.resolution = {
         compile ":markdown:1.1.1"
 
         compile ":crm-core:2.0.2"
-        compile ":crm-security:2.0.0"
+        compile ":crm-security:2.0.3"
         compile ":crm-contact:2.0.2"
-        compile ":crm-content:2.0.3"
+        compile ":crm-content:2.0.4"
     }
 }

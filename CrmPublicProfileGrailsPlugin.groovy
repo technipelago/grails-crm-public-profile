@@ -1,6 +1,6 @@
 class CrmPublicProfileGrailsPlugin {
     def groupId = "grails.crm"
-    def version = "1.3.0-SNAPSHOT"
+    def version = "1.3.0"
     def grailsVersion = "2.2 > *"
     def dependsOn = [:]
     def loadAfter = ['crmContact']
