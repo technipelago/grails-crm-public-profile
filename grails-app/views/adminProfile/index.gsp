@@ -8,28 +8,28 @@
     <r:require module="autocomplete"/>
     <r:script>
     $(document).ready(function() {
-        $("input[name='title']").autocomplete("${createLink(action: 'autocompleteTitle', params: [max: 20])}", {
+        $("input[name='title']").autocomplete("<%=createLink(action: 'autocompleteTitle', params: [max: 20])%>", {
             remoteDataType: 'json',
             useCache: false,
             filter: false,
             preventDefaultReturn: true,
             selectFirst: true
         });
-        $("input[name='category']").autocomplete("${createLink(action: 'autocompleteCategoryType', params: [max: 20])}", {
+        $("input[name='category']").autocomplete("<%=createLink(action: 'autocompleteCategoryType', params: [max: 20])%>", {
             remoteDataType: 'json',
             useCache: false,
             filter: false,
             preventDefaultReturn: true,
             selectFirst: true
         });
-        $("input[name='tags']").autocomplete("${createLink(action: 'autocompleteTags', params: [max: 20])}", {
+        $("input[name='tags']").autocomplete("<%=createLink(action: 'autocompleteTags', params: [max: 20])%>", {
             remoteDataType: 'json',
             useCache: false,
             filter: false,
             preventDefaultReturn: true,
             selectFirst: true
         });
-        $("input[name='username']").autocomplete("${createLink(action: 'autocompleteUsernameSimple', params: [max: 20])}", {
+        $("input[name='username']").autocomplete("<%=createLink(action: 'autocompleteUsernameSimple', params: [max: 20])%>", {
             remoteDataType: 'json',
             useCache: false,
             filter: false,

@@ -22,7 +22,7 @@
             $newInput.focus();
         }
         $(document).ready(function() {
-            $("input.crm-category").autocomplete("${createLink(action: 'autocompleteCategoryType', params: [max: 20])}", {
+            $("input.crm-category").autocomplete("<%=createLink(action: 'autocompleteCategoryType', params: [max: 20])%>", {
                 remoteDataType: 'json',
                 useCache: false,
                 filter: false,
