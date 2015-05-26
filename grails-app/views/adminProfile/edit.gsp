@@ -32,15 +32,22 @@
                 <% if (css) { %>
                 stylesheet.push("${resource(css)}");
                 <% } %>
+                CKEDITOR.plugins.addExternal( 'widget', "${ resource(dir: 'js/ckeditor/plugins/widget', file: 'plugin.js', plugin: 'crm-content-ui')}");
+                CKEDITOR.plugins.addExternal( 'dialog', "${ resource(dir: 'js/ckeditor/plugins/dialog', file: 'plugin.js', plugin: 'crm-content-ui')}");
+                CKEDITOR.plugins.addExternal( 'dialogui', "${ resource(dir: 'js/ckeditor/plugins/dialogui', file: 'plugin.js', plugin: 'crm-content-ui')}");
+                CKEDITOR.plugins.addExternal( 'clipboard', "${ resource(dir: 'js/ckeditor/plugins/clipboard', file: 'plugin.js', plugin: 'crm-content-ui')}");
+                CKEDITOR.plugins.addExternal( 'lineutils', "${ resource(dir: 'js/ckeditor/plugins/lineutils', file: 'plugin.js', plugin: 'crm-content-ui')}");
+                CKEDITOR.plugins.addExternal( 'image2', "${ resource(dir: 'js/ckeditor/plugins/image2', file: 'plugin.js', plugin: 'crm-content-ui')}");
+                CKEDITOR.config.extraPlugins = 'widget,dialog,dialogui,clipboard,lineutils,image2';
                 var editor = CKEDITOR.replace('content',
                 {
                     customConfig: "${resource(dir: 'js', file: 'crm-ckeditor-config.js', plugin: 'crm-content-ui')}",
                     stylesSet: "crm-web-styles:${resource(dir: 'js', file: 'crm-ckeditor-styles.js', plugin: 'crm-content-ui')}",
-                    baseHref: "${createLink(controller: 'static')}",
+                    baseHref: '',//"${createLink(controller: 'static')}",
                     contentsCss: stylesheet,
-                    filebrowserBrowseUrl: "${createLink(controller: 'crmContent', action: 'browse', params: [reference: 'crmContact@' + crmContact.ident()])}",
+                    filebrowserBrowseUrl: "${createLink(controller: 'crmContent', action: 'browse')}?reference=crmContact@${crmContact.ident()}",
                     filebrowserUploadUrl: "${createLink(controller: 'crmContent', action: 'upload')}",
-                    filebrowserImageBrowseUrl: "${createLink(controller: 'crmContent', action: 'browse', params: [pattern: 'image', reference: 'crmContact@' + crmContact.ident()])}",
+                    filebrowserImageBrowseUrl: "${createLink(controller: 'crmContent', action: 'browse')}?pattern=image&reference=crmContact@${crmContact.ident()}",
                     filebrowserImageUploadUrl: "${createLink(controller: 'crmContent', action: 'upload')}"
                 });
             <% } %>
