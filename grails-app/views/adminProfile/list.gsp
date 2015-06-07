@@ -88,6 +88,15 @@
 
         <crm:selectionMenu visual="primary"/>
 
+        <g:if test="${crmContactTotal}">
+            <div class="btn-group">
+                <select:link action="export" accesskey="p" selection="${selection}" class="btn btn-info">
+                    <i class="icon-print icon-white"></i>
+                    <g:message code="crmContact.button.export.label" default="Print/Export"/>
+                </select:link>
+            </div>
+        </g:if>
+
         <crm:button type="link" action="create" visual="success" permission="crmContact:create"
                     icon="icon-file icon-white"
                     label="crmContact.button.create.label" permission="crmContact:create"/>

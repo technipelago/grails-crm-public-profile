@@ -13,6 +13,8 @@ import grails.plugins.crm.core.WebUtils
 import grails.transaction.Transactional
 import org.springframework.dao.DataIntegrityViolationException
 
+import java.util.concurrent.TimeoutException
+
 /**
  * Created by goran on 15-05-17.
  */
@@ -23,7 +25,7 @@ class AdminProfileController {
     def crmSecurityService
     def selectionService
     def recentDomainService
-
+    def crmTagService
 
     def index() {
         // If any query parameters are specified in the URL, let them override the last query stored in session.
@@ -97,15 +99,15 @@ class AdminProfileController {
 
                 if (crmContact.save()) {
                     // TODO hack!
-                    if(!params.text) {
+                    if (!params.text) {
                         params.text = "<h2>${crmContact}</h2>\n<p>${crmContact.description ?: ''}</p>\n"
                     }
-                    if(params.text) {
+                    if (params.text) {
                         crmContentService.createResource(params.text, 'presentation.html', crmContact, [contentType: 'text/html', status: CrmResourceRef.STATUS_SHARED])
                     }
                 } else {
                     render(view: 'create', model: [user: user, crmContact: crmContact,
-                            addressTypes: addressTypes, referer: params.referer])
+                                                   addressTypes: addressTypes, referer: params.referer])
                     return
                 }
                 flash.success = message(code: 'default.created.message', args: [message(code: 'crmContact.label', default: 'Company'), crmContact.toString()])
@@ -145,7 +147,7 @@ class AdminProfileController {
                 }
 
                 return [crmContact: crmContact, externalLink: externalLink, targetContact: targetContact,
-                        selection: params.getSelectionURI()]
+                        selection : params.getSelectionURI()]
             }
             json {
                 render crmContact.dao as JSON
@@ -170,7 +172,9 @@ class AdminProfileController {
         }
 
         def addressTypes = getAddressTypes(tenant)
-        def html = crmContentService.findResourcesByReference(crmContact, [name: "*.html", status: CrmResourceRef.STATUS_SHARED])?.find{it}
+        def html = crmContentService.findResourcesByReference(crmContact, [name: "*.html", status: CrmResourceRef.STATUS_SHARED])?.find {
+            it
+        }
 
         switch (request.method) {
             case "GET":
@@ -191,17 +195,17 @@ class AdminProfileController {
 
                 if (crmContact.save()) {
                     // TODO hack!
-                    if(!params.text) {
+                    if (!params.text) {
                         params.text = "<h2>${crmContact}</h2>\n<p>${crmContact.description ?: ''}</p>\n"
                     }
-                    if(html) {
-                        if(params.text) {
+                    if (html) {
+                        if (params.text) {
                             def inputStream = new ByteArrayInputStream(params.text.getBytes('UTF-8'))
                             crmContentService.updateResource(html, inputStream, 'text/html')
                         } else {
                             crmContentService.deleteReference(html)
                         }
-                    } else if(params.text) {
+                    } else if (params.text) {
                         crmContentService.createResource(params.text, 'presentation.html', crmContact, [contentType: 'text/html', status: CrmResourceRef.STATUS_SHARED])
                     }
                 } else {
@@ -218,13 +222,13 @@ class AdminProfileController {
         // This is a workaround for Grails 2.4.4 data binding that does not insert a new CrmContactAddress when 'id' is null.
         // I consider this to be a bug in Grails 2.4.4 but I'm not sure how it's supposed to work with Set.
         // This workaround was not needed in Grails 2.2.4.
-        for(i in 0..10) {
+        for (i in 0..10) {
             def a = params["addresses[$i]".toString()]
-            if(a && ! a.id) {
+            if (a && !a.id) {
                 def ca = new CrmContactAddress(contact: crmContact)
                 bindData(ca, a)
-                if(! ca.isEmpty()) {
-                    if(ca.validate()) {
+                if (!ca.isEmpty()) {
+                    if (ca.validate()) {
                         crmContact.addToAddresses(ca)
                     } else {
                         crmContact.errors.addAllErrors(ca.errors)
@@ -290,9 +294,53 @@ class AdminProfileController {
         }
     }
 
+    def autocompleteTags() {
+        params.offset = params.offset ? params.int('offset') : 0
+        if (params.limit && !params.max) params.max = params.limit
+        params.max = Math.min(params.max ? params.int('max') : 25, 100)
+        def result = crmTagService.listDistinctValue(CrmContact.name, params.remove('q'), params)
+        WebUtils.defaultCache(response)
+        render result as JSON
+    }
+
     def autocompleteCategoryType() {
         def result = crmContactService.listCategoryType(params.remove('q'), params).collect { it.toString() }
         WebUtils.defaultCache(response)
         render result as JSON
+    }
+
+    def export() {
+        def user = crmSecurityService.getUserInfo()
+        def namespace = params.namespace ?: 'crmContact'
+        if (request.post) {
+            def filename = message(code: 'crmContact.label', default: 'Contact')
+            try {
+                def topic = params.topic ?: 'export'
+                def result = event(for: namespace, topic: topic,
+                        data: params + [user: user, tenant: TenantUtils.tenant, locale: request.locale, filename: filename]).waitFor(60000)?.value
+                if (result?.file) {
+                    try {
+                        WebUtils.inlineHeaders(response, result.contentType, result.filename ?: namespace)
+                        WebUtils.renderFile(response, result.file)
+                    } finally {
+                        result.file.delete()
+                    }
+                    return null // Success
+                } else {
+                    flash.warning = message(code: 'crmContact.export.nothing.message', default: 'Nothing was exported')
+                }
+            } catch (TimeoutException te) {
+                flash.error = message(code: 'crmContact.export.timeout.message', default: 'Export did not complete')
+            } catch (Exception e) {
+                log.error("Export event throwed an exception", e)
+                flash.error = message(code: 'crmContact.export.error.message', default: 'Export failed due to an error', args: [e.message])
+            }
+            redirect(action: "index")
+        } else {
+            def uri = params.getSelectionURI()
+            def layouts = event(for: namespace, topic: (params.topic ?: 'exportLayout'),
+                    data: [tenant: TenantUtils.tenant, username: user.username, uri: uri]).waitFor(10000)?.values?.flatten()
+            [layouts: layouts, selection: uri]
+        }
     }
 }
