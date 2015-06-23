@@ -86,7 +86,7 @@
             <input type="hidden" name="${entry.key}" value="${entry.value}"/>
         </g:each>
 
-        <crm:selectionMenu visual="primary"/>
+        <crm:selectionMenu location="crmContact" visual="primary"/>
 
         <g:if test="${crmContactTotal}">
             <div class="btn-group">

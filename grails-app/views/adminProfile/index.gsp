@@ -127,7 +127,7 @@
     </div>
 
     <div class="form-actions btn-toolbar">
-        <crm:selectionMenu visual="primary">
+        <crm:selectionMenu location="crmContact" visual="primary">
             <crm:button action="list" icon="icon-search icon-white" visual="primary"
                         label="crmContact.button.search.label" accesskey="s"/>
         </crm:selectionMenu>
