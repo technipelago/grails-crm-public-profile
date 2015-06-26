@@ -45,9 +45,9 @@
                     stylesSet: "crm-web-styles:${resource(dir: 'js', file: 'crm-ckeditor-styles.js', plugin: 'crm-content-ui')}",
                     baseHref: '',//"${createLink(controller: 'static')}",
                     contentsCss: stylesheet,
-                    filebrowserBrowseUrl: "${createLink(controller: 'crmContent', action: 'browse')}?reference=crmContact@${crmContact.ident()}",
+                    filebrowserBrowseUrl: "${createLink(controller: 'crmContent', action: 'browse')}?reference=crmContact@${crmContact.ident()}&status=shared",
                     filebrowserUploadUrl: "${createLink(controller: 'crmContent', action: 'upload')}",
-                    filebrowserImageBrowseUrl: "${createLink(controller: 'crmContent', action: 'browse')}?pattern=image&reference=crmContact@${crmContact.ident()}",
+                    filebrowserImageBrowseUrl: "${createLink(controller: 'crmContent', action: 'browse')}?pattern=image&reference=crmContact@${crmContact.ident()}&status=shared",
                     filebrowserImageUploadUrl: "${createLink(controller: 'crmContent', action: 'upload')}"
                 });
             <% } %>
