@@ -36,6 +36,17 @@ This plugin can publish contact information on a public web site.
 Users can manage their contact information, upload photos, etc.
 This information can then be rendered with generic templates in a web page.
 
+The motivation for this plugin was to provide a way for dealers to manage their contact information
+on a central site. Dealers could upload photos, provide accurate information like opening hours, etc.
+Dealer information was then presented on a central site for visitors to search for nearby dealers.
+
+Contact information is stored using the http://gr8crm.github.io/plugins/crm-contact/[crm-contact] plugin.
+This plugin gives you all standard contact information properties like name, telephone, address, etc.
+
+Media (photos) are stored using the http://gr8crm.github.io/plugins/crm-content/[crm-content] plugin.
+
+By leveraging other {gr8crm} plugins this plugin is quite small. It just package functionality from
+other plugins in a user friendly way.
 
 == Changes
 
