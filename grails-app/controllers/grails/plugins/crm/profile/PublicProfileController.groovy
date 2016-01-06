@@ -16,25 +16,32 @@
 
 package grails.plugins.crm.profile
 
-import grails.plugins.crm.content.CrmResourceRef
-
-import javax.servlet.http.HttpServletResponse
 import grails.converters.JSON
 import grails.plugins.crm.contact.CrmContact
-import grails.plugins.crm.security.CrmUser
-import grails.plugins.crm.core.TenantUtils
 import grails.plugins.crm.content.CrmResourceFolder
+import grails.plugins.crm.content.CrmResourceRef
+import grails.plugins.crm.core.TenantUtils
+import grails.plugins.crm.security.CrmUser
+import grails.transaction.Transactional
+
+import javax.servlet.http.HttpServletResponse
 
 class PublicProfileController {
 
     static allowedMethods = [index : "GET", edit: ["GET", "POST"], createFromUser: "POST", createFromContact: "POST",
                              upload: "POST", updateImageCaption: "POST", deleteImage: "POST", updateDescription: "POST"]
 
-    private static final String PUBLIC_FOLDER = "partner"
-
     def crmSecurityService
     def crmContactService
     def crmContentService
+
+    private String getPublicFolder() {
+        String folder = grailsApplication.config.crm.publicProfile.folder ?: 'profiles'
+        if (folder.endsWith('/')) {
+            folder = folder[0..-2]
+        }
+        folder
+    }
 
     def index(Long id) {
         def (crmContact, user) = findContactAndUser(id)
@@ -48,14 +55,14 @@ class PublicProfileController {
             user = [:]
         }
         def photos
-        def webFolder = crmContentService.getFolder(PUBLIC_FOLDER + '/' + crmContact.number, crmContact.tenantId)
+        def webFolder = crmContentService.getFolder(getPublicFolder() + '/' + crmContact.number, crmContact.tenantId)
         if (webFolder) {
             photos = webFolder.getFiles(extension: ['png', 'jpg', 'gif'])
         } else {
             webFolder = crmContact
             def jpgs = crmContentService.findResourcesByReference(webFolder, [name: "*.jpg", status: CrmResourceRef.STATUS_SHARED])
             def pngs = crmContentService.findResourcesByReference(webFolder, [name: "*.png", status: CrmResourceRef.STATUS_SHARED])
-            photos = (jpgs + pngs) //.findAll { !it.isTagged('bilder') }
+            photos = (jpgs + pngs) //.findAll { !it.isTagged('photos') }
         }
         [user: user, crmContact: crmContact, address: crmContact.address, webFolder: webFolder, photos: photos]
     }
@@ -94,10 +101,10 @@ class PublicProfileController {
                               postalCode: user.postalCode, city: user.city, region: user.region, country: user.countryCode])
         }
 
-        def folder = crmContentService.getFolder(PUBLIC_FOLDER + '/' + crmContact.number, crmContant.tenantId)
+        def folder = crmContentService.getFolder(getPublicFolder() + '/' + crmContact.number, crmContant.tenantId)
         if (!folder) {
             TenantUtils.withTenant(crmContact.tenantId) {
-                def root = PUBLIC_FOLDER ? crmContentService.getFolder(PUBLIC_FOLDER, crmContact.tenantId) : null
+                def root = crmContentService.getFolder(getPublicFolder(), crmContact.tenantId)
                 crmContentService.createFolder(root, crmContact.number, crmContact.name, null, "")
             }
         }
@@ -118,7 +125,7 @@ class PublicProfileController {
             return
         }
         TenantUtils.withTenant(crmContact.tenantId) {
-            def root = PUBLIC_FOLDER ? crmContentService.getFolder(PUBLIC_FOLDER, crmContact.tenantId) : null
+            def root = crmContentService.getFolder(getPublicFolder(), crmContact.tenantId)
             crmContentService.createFolder(root, crmContact.number, crmContact.name, null, "")
         }
 
@@ -131,6 +138,7 @@ class PublicProfileController {
         }
     }
 
+    @Transactional
     def edit(Long id) {
         def (crmContact, user) = findContactAndUser(id)
         if (!crmContact) {
@@ -177,14 +185,28 @@ class PublicProfileController {
         [cmd: cmd, crmContact: crmContact]
     }
 
-    // TODO How do we make the facts dynamic/configurable???
+    /**
+     * Tag the CrmContact instance with values from the request.
+     *
+     * @param crmContact
+     * @param params
+     */
     private void updateFacts(crmContact, params) {
         TenantUtils.withTenant(crmContact.tenantId) {
-            crmContact.setTagValue("brukare", params.brukare)
-            crmContact.setTagValue("djurslag", params.djurslag)
-            crmContact.setTagValue("nöt-antal", params.antal)
-            crmContact.setTagValue("nöt-raser", params.raser)
+            getFactTags().each { key, value ->
+                crmContact.setTagValue(value, params[key])
+            }
         }
+    }
+
+    /**
+     * The configuration parameter 'crm.publicProfile.tags' must be a Map
+     * where the key is the request parameter and value is the name of the tag.
+     *
+     * @return
+     */
+    private Map<String, String> getFactTags() {
+        grailsApplication.config.crm.publicProfile.tags ?: [:]
     }
 
     def upload(Long folder) {
