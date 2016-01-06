@@ -2,12 +2,13 @@
 .idea
 *.iml
 
-# Ignore build artifacts
 target
 
-# Ignore packaged plugins
 *.zip
 *.zip.sha1
+
+.gradle
+.DS_Store
 
 stacktrace.log
 plugin.xml
