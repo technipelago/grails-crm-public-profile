@@ -18,5 +18,10 @@ that focus on one specific domain, for example *contact*, *project* or *document
 
 ## Public Profile
 
-A public profile is a web page in a public or intranet site where
+A public profile is a web page on a public or intranet site where
 contact information is displayed in a visitor friendly format.
+
+This plugin let users manage their public profile, they can update contact information
+and upload pictures, etc.
+
+Read more at [gr8crm.github.io](http://gr8crm.github.io/plugins/crm-public-profile/)
