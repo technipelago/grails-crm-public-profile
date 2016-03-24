@@ -27,6 +27,10 @@ class AdminProfileController {
     def recentDomainService
     def crmTagService
 
+    private String getIndexPage() {
+        grailsApplication.config.crm.publicProfile.index.name ?: 'index.html'
+    }
+
     def index() {
         // If any query parameters are specified in the URL, let them override the last query stored in session.
         def cmd = new CrmContactQueryCommand()
@@ -103,7 +107,7 @@ class AdminProfileController {
                         params.text = "<h2>${crmContact}</h2>\n<p>${crmContact.description ?: ''}</p>\n"
                     }
                     if (params.text) {
-                        crmContentService.createResource(params.text, 'presentation.html', crmContact, [contentType: 'text/html', status: CrmResourceRef.STATUS_SHARED])
+                        crmContentService.createResource(params.text, getIndexPage(), crmContact, [contentType: 'text/html', status: CrmResourceRef.STATUS_SHARED])
                     }
                 } else {
                     render(view: 'create', model: [user: user, crmContact: crmContact,
@@ -206,7 +210,7 @@ class AdminProfileController {
                             crmContentService.deleteReference(html)
                         }
                     } else if (params.text) {
-                        crmContentService.createResource(params.text, 'presentation.html', crmContact, [contentType: 'text/html', status: CrmResourceRef.STATUS_SHARED])
+                        crmContentService.createResource(params.text, getIndexPage(), crmContact, [contentType: 'text/html', status: CrmResourceRef.STATUS_SHARED])
                     }
                 } else {
                     return [user: user, crmContact: crmContact, addressTypes: addressTypes, referer: params.referer, htmlContent: html]
