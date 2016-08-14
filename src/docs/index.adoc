@@ -50,6 +50,7 @@ other plugins in a user friendly way.
 
 == Changes
 
+2.4.1:: Upgraded plugin to Grails 2.4.5. Moved hard coded stuff to config parameters.
 2.4.0:: First public release
 
 == License
