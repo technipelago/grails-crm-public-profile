@@ -16,8 +16,8 @@ grails.project.dependency.resolution = {
     inherits "global"
     log "warn"
     repositories {
-        grailsCentral()
         mavenLocal()
+        grailsCentral()
         mavenCentral()
     }
     dependencies {
@@ -42,10 +42,10 @@ grails.project.dependency.resolution = {
         compile ":decorator:1.1"
         compile ":decorator-markdown:0.4"
 
-        compile ":crm-core:2.4.3"
-        compile ":crm-security:2.4.3"
-        compile ":crm-contact:2.4.2"
-        compile ":crm-content-ui:2.4.2"
+        compile ":crm-core:2.4.5"
+        compile ":crm-security:2.4.5"
+        compile ":crm-contact:2.4.5"
+        compile ":crm-content-ui:2.5.0"
     }
 }
 
